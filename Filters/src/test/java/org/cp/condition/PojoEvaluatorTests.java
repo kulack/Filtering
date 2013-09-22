@@ -20,6 +20,7 @@ public class PojoEvaluatorTests {
 				"a=''''",
 				"a='christopher''s test'",
 				"a<3",
+				"a<3.0",
 				"a<'3'",
 				"a<2423482384",
 				"a<'this is some text'",
@@ -45,6 +46,9 @@ public class PojoEvaluatorTests {
 				"<d",
 				"a>",
 				"123<123",
+				"a<..3",
+				"a<3.",
+				"a<3.3.",
 				"",
 				"a<2 and and a<2",
 				"a<2 and or a<2",
@@ -366,6 +370,11 @@ public class PojoEvaluatorTests {
 		} catch (NoSuchElementException e) {
 			// expected
 		}
+		
+		// ensure the default for filter(iterator) is filter(iterator, true)
+		matchingIterator = evaluator.filter(pojos.iterator());
+		Assert.assertTrue(matchingIterator.hasNext());
+		Assert.assertEquals(1, matchingIterator.next().field);
 	}
 	
 	@Test
@@ -395,6 +404,13 @@ public class PojoEvaluatorTests {
 		}
 		Assert.assertEquals(1, encounteredPojos.size());
 		Assert.assertEquals(-20, encounteredPojos.remove(0).field);
+		
+		// just ensure that the default value for filter(iterable) is filter(iterable, true)
+		encounteredPojos = new ArrayList<IntPojo>();
+		for(IntPojo pojo : evaluator.filter(pojos)) {
+			encounteredPojos.add(pojo);
+		}
+		Assert.assertEquals(3, encounteredPojos.size());
 	}
 	
 	/**

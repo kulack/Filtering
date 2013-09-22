@@ -1,7 +1,9 @@
 package org.cp.condition;
 import static org.parboiled.errors.ErrorUtils.printParseErrors;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.parboiled.Node;
@@ -59,12 +61,29 @@ public class PojoEvaluator {
 	}
 	
 	/**
+	 * Returns an iterator consisting of elements from the supplied
+	 * iterator that match the condition
+	 */
+	public <T> Iterator<T> filter(Iterator<T> iterator) {
+		return filter(iterator, true);
+	}
+	
+	/**
 	 * Filters an existing iterator based on whether its elements
 	 * match the condition or not
 	 * @param matching true if matching elements should included, or false if nonmatching elements
 	 */
 	public <T> Iterator<T> filter(Iterator<T> iterator, boolean matching) {
 		return new ConditionalIterator<T>(iterator, matching);
+	}
+	
+	/**
+	 * Returns an iterable consisting of elements from the supplied
+	 * iterator that match the condition
+	 * @param matching true if matching elements should included, or false if nonmatching elements
+	 */
+	public <T> Iterable<T> filter(Iterable<T> iterable) {
+		return new ConditionalIterable<T>(iterable, true);
 	}
 	
 	/**

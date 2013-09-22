@@ -100,7 +100,7 @@ class PojoConditionParser extends BaseParser<String> {
      */
     @SuppressSubnodes
 	Rule Value() {
-		return FirstOf(Sequence('\'', ZeroOrMore(FirstOf(NoneOf("'"), Sequence("'", "'"))), '\''), OneOrMore(Digit()));
+		return FirstOf(Sequence('\'', ZeroOrMore(FirstOf(NoneOf("'"), Sequence("'", "'"))), '\''), Sequence(OneOrMore(Digit()), Optional(".", OneOrMore(Digit()))));
 	}
 	
     /**
