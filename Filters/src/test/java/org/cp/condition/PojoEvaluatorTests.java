@@ -9,6 +9,10 @@ import java.util.NoSuchElementException;
 
 import junit.framework.Assert;
 
+import org.cp.pojoconditions.FieldException;
+import org.cp.pojoconditions.FieldTypeException;
+import org.cp.pojoconditions.NonexistentFieldException;
+import org.cp.pojoconditions.PojoEvaluator;
 import org.junit.Test;
 
 
@@ -424,11 +428,22 @@ public class PojoEvaluatorTests {
 		
 		PojoEvaluator evaluator = PojoEvaluator.forCondition("field=''");
 		
+		List<FieldException> fieldExceptions = evaluator.getUnsupportedIdentifiers(datePojo.getClass());
+		Assert.assertEquals(1, fieldExceptions.size());
+		Assert.assertTrue(fieldExceptions.get(0) instanceof FieldTypeException);
+		
+		FieldTypeException fieldTypeException = (FieldTypeException)fieldExceptions.get(0);
+		Assert.assertEquals("field", fieldTypeException.getFieldName());
+		Assert.assertEquals(Date.class, fieldTypeException.getFieldType());
+		Assert.assertEquals(DatePojo.class, fieldTypeException.getPojoClass());
+		
 		try{
 			evaluator.matches(datePojo);
 			Assert.fail("Expected an exception");
-		} catch (IllegalArgumentException e) {
-			// expected since we do not support date fields
+		} catch (FieldTypeException e) {
+			Assert.assertEquals("field", e.getFieldName());
+			Assert.assertEquals(Date.class, e.getFieldType());
+			Assert.assertEquals(DatePojo.class, e.getPojoClass());
 		}
 	}
 	
@@ -438,11 +453,20 @@ public class PojoEvaluatorTests {
 		
 		PojoEvaluator evaluator = PojoEvaluator.forCondition("madeUpField=''");
 
+		List<FieldException> fieldExceptions = evaluator.getUnsupportedIdentifiers(intPojo.getClass());
+		Assert.assertEquals(1, fieldExceptions.size());
+		Assert.assertTrue(fieldExceptions.get(0) instanceof NonexistentFieldException);
+		
+		NonexistentFieldException NonexistentFieldException = (NonexistentFieldException)fieldExceptions.get(0);
+		Assert.assertEquals("madeUpField", NonexistentFieldException.getFieldName());
+		Assert.assertEquals(IntPojo.class, NonexistentFieldException.getPojoClass());
+		
 		try{
 			evaluator.matches(intPojo);
 			Assert.fail("Expected an exception");
-		} catch (IllegalArgumentException e) {
-			// expected since we do not support date fields
+		} catch (NonexistentFieldException e) {
+			Assert.assertEquals("madeUpField", e.getFieldName());
+			Assert.assertEquals(IntPojo.class, e.getPojoClass());
 		}
 	}
 	

@@ -1,19 +1,15 @@
-package org.cp.condition;
-import static org.parboiled.errors.ErrorUtils.printParseErrors;
-
-import java.util.ArrayList;
+package org.cp.pojoconditions;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
-import org.parboiled.Node;
-import org.parboiled.Parboiled;
-import org.parboiled.parserunners.RecoveringParseRunner;
-import org.parboiled.support.ParsingResult;
+import org.cp.condition.CompoundConditionParser;
+import org.cp.condition.Condition;
 
 
 public class PojoEvaluator {
-	private final ParsingResult<?> parsingResult;
+	private final Condition baseCondition;
 	
 	/**
 	 * Builds a PojoEvaluator to determine if supplied pojos
@@ -21,14 +17,7 @@ public class PojoEvaluator {
 	 * @throws IllegalArgumentException if the condition is invalid
 	 */
 	private PojoEvaluator(String condition) {
-    	PojoConditionParser parser = Parboiled.createParser(PojoConditionParser.class);
-    	ParsingResult<?> result = new RecoveringParseRunner(parser.Condition()).run(condition);
-    	
-    	if(result.hasErrors()) {
-    		throw new IllegalArgumentException(printParseErrors(result));
-    	}
-    	
-    	parsingResult = result;
+		baseCondition = CompoundConditionParser.parseCondition(condition);
 	}
 	
 	/**
@@ -54,15 +43,30 @@ public class PojoEvaluator {
 	 * Determines if the pojo matches the condition
 	 * @param object pojo to have its fields inspected
 	 * @return true if it does, otherwise false
+	 * @throws FieldException if the condition specified a field
+	 * not valid for this object
 	 */
 	public boolean matches(Object object) {
-    	Node<?> conditionRoot = parsingResult.parseTreeRoot;
-    	return PojoConditionParser.evaluateCondition(object, parsingResult.inputBuffer, conditionRoot.getChildren().get(0));
+		return baseCondition.isTrue(new ObjectFieldComparer(object));
+	}
+	
+	/**
+	 * Determines if the condition specifies any fields that would be
+	 * invalid when applying the condition to an object of the provided class
+	 * @return a list of exceptions detailing fields from the condition
+	 * that are not applicable to the provided class
+	 */
+	public List<FieldException> getUnsupportedIdentifiers(Class<?> clazz) {
+		Set<String> uniqueIdentifiers = baseCondition.getUniqueIdentifiers();
+		
+		return ObjectFieldComparer.getUnsupportedFields(clazz, uniqueIdentifiers);
 	}
 	
 	/**
 	 * Returns an iterator consisting of elements from the supplied
 	 * iterator that match the condition
+	 * @throws FieldException if the condition specified a field
+	 * not valid for this object
 	 */
 	public <T> Iterator<T> filter(Iterator<T> iterator) {
 		return filter(iterator, true);
@@ -72,6 +76,8 @@ public class PojoEvaluator {
 	 * Filters an existing iterator based on whether its elements
 	 * match the condition or not
 	 * @param matching true if matching elements should included, or false if nonmatching elements
+	 * @throws FieldException if the condition specified a field
+	 * not valid for this object
 	 */
 	public <T> Iterator<T> filter(Iterator<T> iterator, boolean matching) {
 		return new ConditionalIterator<T>(iterator, matching);
@@ -81,6 +87,8 @@ public class PojoEvaluator {
 	 * Returns an iterable consisting of elements from the supplied
 	 * iterator that match the condition
 	 * @param matching true if matching elements should included, or false if nonmatching elements
+	 * @throws FieldException if the condition specified a field
+	 * not valid for this object
 	 */
 	public <T> Iterable<T> filter(Iterable<T> iterable) {
 		return new ConditionalIterable<T>(iterable, true);
@@ -90,6 +98,8 @@ public class PojoEvaluator {
 	 * Filters an existing iterable based on whether its elements
 	 * match the condition or not
 	 * @param matching true if matching elements should included, or false if nonmatching elements
+	 * @throws FieldException if the condition specified a field
+	 * not valid for this object
 	 */
 	public <T> Iterable<T> filter(Iterable<T> iterable, boolean matching) {
 		return new ConditionalIterable<T>(iterable, matching);
