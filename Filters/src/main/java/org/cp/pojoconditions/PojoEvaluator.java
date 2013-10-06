@@ -16,8 +16,16 @@ public class PojoEvaluator {
 	 * match the condition
 	 * @throws IllegalArgumentException if the condition is invalid
 	 */
-	private PojoEvaluator(String condition) {
-		baseCondition = CompoundConditionParser.parseCondition(condition);
+	private PojoEvaluator(String condition, boolean matchMethods) {
+		baseCondition = CompoundConditionParser.parseCondition(condition, matchMethods);
+	}
+	
+	/**
+	 * See forCondition(string, boolean).  Defaults the matchMethods parameter
+	 * to false.
+	 */
+	public static PojoEvaluator forCondition(String condition) {
+		return new PojoEvaluator(condition, false);
 	}
 	
 	/**
@@ -35,8 +43,8 @@ public class PojoEvaluator {
 	 * @return an evaluator that will determine if a given
 	 *         matches the condition
 	 */
-	public static PojoEvaluator forCondition(String condition) {
-		return new PojoEvaluator(condition);
+	public static PojoEvaluator forCondition(String condition, boolean matchMethods) {
+		return new PojoEvaluator(condition, matchMethods);
 	}
 	
 	/**

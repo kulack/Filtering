@@ -4,11 +4,18 @@ import java.util.Set;
 
 public class SimpleCondition extends Condition {
 	private final String identifier;
+	private final boolean isMethod;
 	private final String operator;
 	private final String value;
 	
-	public SimpleCondition(String identifier, String operator, String value) {
+	public SimpleCondition(String identifier, boolean isMethod, String operator, String value) {
+		if(isMethod) {
+			int lastRParen = identifier.lastIndexOf(')');
+			int lastLParen = identifier.lastIndexOf('(', lastRParen);
+			identifier = identifier.substring(0, lastLParen);
+		}
 		this.identifier = identifier;
+		this.isMethod = isMethod;
 		this.operator = operator;
 		this.value = value;
 	}
@@ -17,6 +24,10 @@ public class SimpleCondition extends Condition {
 		return identifier;
 	}
 
+	public boolean isMethod() {
+		return isMethod;
+	}
+	
 	public String getOperator() {
 		return operator;
 	}
@@ -26,7 +37,7 @@ public class SimpleCondition extends Condition {
 	}
 	
 	public boolean isTrue(ValueComparer valueProvider) {
-		return valueProvider.isTrue(identifier, operator, value);
+		return valueProvider.isTrue(identifier, isMethod, operator, value);
 	}
 
 	void addUniqueIdentifiers(Set<String> identifiers) {
@@ -35,10 +46,11 @@ public class SimpleCondition extends Condition {
 	
 	@Override
 	public String toString() {
-		return "SimpleCondition [identifier=" + identifier + ", operator="
-				+ operator + ", value=" + value + "]";
+		return "SimpleCondition [identifier=" + identifier + ", isMethod="
+				+ isMethod + ", operator=" + operator + ", value=" + value
+				+ "]";
 	}
-	
+
 	public String toSimpleString() {
 		StringBuilder sb = new StringBuilder("");
 		sb.append(identifier);

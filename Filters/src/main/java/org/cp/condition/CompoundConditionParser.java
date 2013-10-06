@@ -5,7 +5,7 @@ import static org.parboiled.errors.ErrorUtils.printParseErrors;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.parboiled.BaseParser;
+import org.cp.pojoconditions.PojoParser;
 import org.parboiled.Parboiled;
 import org.parboiled.Rule;
 import org.parboiled.parserunners.ReportingParseRunner;
@@ -19,8 +19,13 @@ import org.parboiled.support.Var;
  * a>3
  * a>3 and b>4 or c>5
  */
-public class CompoundConditionParser extends BaseParser<Condition> {
-
+public class CompoundConditionParser extends PojoParser<Condition> {
+	protected final boolean matchMethods;
+	
+	public CompoundConditionParser(Boolean matchMethods) {
+		this.matchMethods = matchMethods;
+	}
+	
 	public Rule Condition() {
 		return FirstOf(Sequence(SimpleCondition(), EOI), Sequence(AndCondition(), EOI), Sequence(OrCondition(), EOI));
 	}
@@ -85,25 +90,18 @@ public class CompoundConditionParser extends BaseParser<Condition> {
 	 */
     public Rule SimpleCondition() {
     	StringVar identifier = new StringVar();
+    	Var<Boolean> isMethod = new Var<Boolean>();
     	StringVar operator = new StringVar();
     	StringVar value = new StringVar();
-    	
-    	return Sequence(Identifier(), identifier.set(match()), 
+
+    	return Sequence(
+    			FirstOf(Sequence(matchMethods, NoParamMethod(), identifier.set(match()), isMethod.set(true)), Sequence(Identifier(), identifier.set(match()), isMethod.set(false))), 
     			Optional(Spacing()), 
     			ComparisonOperator(), operator.set(match()), 
     			Optional(Spacing()), 
     			Value(), value.set(match()),
-    			push(new SimpleCondition(identifier.get(), operator.get(), value.get())));
+    			push(new SimpleCondition(identifier.get(), isMethod.get(), operator.get(), value.get())));
     }
-
-    /**
-     * A rule used to match an arbitrary amount of whitespace.  The only
-     * whitespace that is allowed in the condition is one or more spaces,
-     * other whitespace characters (tabs, newlines, etc.) are not allowed.
-     */
-	Rule Spacing() {
-		return OneOrMore(AnyOf(" ").label("Whitespace"));
-	}
     
     /**
      * Matches what we expect in a condition to represent OR
@@ -130,67 +128,12 @@ public class CompoundConditionParser extends BaseParser<Condition> {
     }
     
     /**
-     * A value is represented either by a number directly, or by
-     * a string representation enclosed in single quotes.  Note that
-     * inclusion or lack of quotes does not impact the type it is evaluated
-     * as later.
-     */
-	Rule Value() {
-		return FirstOf(Sequence('\'', ZeroOrMore(FirstOf(NoneOf("'"), Sequence("'", "'"))), '\''), Sequence(OneOrMore(Digit()), Optional(".", OneOrMore(Digit()))));
-	}
-	
-    /**
-     * An identifier is reprented by one non-numeric character followed
-     * by characters and numbers
-     */
-	Rule Identifier() {
-		return Sequence(Character(), ZeroOrMore(CharacterOrDigit()));
-	}
-
-    /**
-     * Represents legal characters after the first for a field
-     * @return
-     */
-	public Rule CharacterOrDigit() {
-		return FirstOf(Character(), Digit());
-	}
-
-	/**
-	 * Represents legal characters for the start of a field in Java
-	 */
-	public Rule Character() {
-		return FirstOf( 
-				CharRange('A', 'Z'),
-				CharRange('a', 'z'), 
-				CharRange('\u00C0', '\u00D6'), 
-				CharRange('\u00D8', '\u00F6'), 
-				CharRange('\u00F8', '\u02FF'), 
-				CharRange('\u0370', '\u037D'), 
-				CharRange('\u037F', '\u1FFF'), 
-				CharRange('\u200C', '\u200D'), 
-				CharRange('\u2070', '\u218F'), 
-				CharRange('\u2C00', '\u2FEF'), 
-				CharRange('\u3001', '\uD7FF'), 
-				CharRange('\uF900', '\uFDCF'), 
-				CharRange('\uFDF0', '\uFFFD'),
-				'_'
-		);
-	}
-
-	/**
-	 * Represents numbers
-	 */
-	public Rule Digit() {
-		return CharRange('0', '9');
-	}
-    
-    /**
      * Parses the given condition string and returns a condition object
      * that reflects the string
      * @throws IllegalArgumentException if the condition fails to parse
      */
-    public static Condition parseCondition(String condition) {
-    	CompoundConditionParser parser = Parboiled.createParser(CompoundConditionParser.class);
+    public static Condition parseCondition(String condition, boolean matchMethods) {
+    	CompoundConditionParser parser = Parboiled.createParser(CompoundConditionParser.class, matchMethods);
     	ParsingResult<Condition> result = new ReportingParseRunner<Condition>(parser.Condition()).run(condition);
     	
     	if(result.hasErrors()) {

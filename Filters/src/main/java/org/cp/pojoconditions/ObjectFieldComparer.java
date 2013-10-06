@@ -1,6 +1,8 @@
 package org.cp.pojoconditions;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,8 +19,8 @@ class ObjectFieldComparer implements ValueComparer {
 		this.pojo = pojo;
 	}
 	
-	public boolean isTrue(String identifier, String operator, String value) {
-		return evaluateSimpleCondition(identifier, operator, value);
+	public boolean isTrue(String identifier, boolean isMethod, String operator, String value) {
+		return evaluateSimpleCondition(identifier, isMethod, operator, value);
 	}
 	
 	public static List<FieldException> getUnsupportedFields(Class<?> clazz, Set<String> fields) {
@@ -33,14 +35,14 @@ class ObjectFieldComparer implements ValueComparer {
 					fieldExceptions.add(new FieldTypeException(fieldName, fieldType, clazz));
 				}
 			} catch (NoSuchFieldException e) {
-				fieldExceptions.add(new NonexistentFieldException(fieldName, clazz));
+				fieldExceptions.add(new NonexistentIdentifierException(fieldName, false, clazz));
 			}
 		}
 		
 		return fieldExceptions;
 	}
 	
-    private boolean evaluateSimpleCondition(String identifier, String operator, String value) {
+    private boolean evaluateSimpleCondition(String identifier, boolean isMethod, String operator, String value) {
     	boolean result = true;
     	
     	if(value.startsWith("'") && value.endsWith("'")) {
@@ -48,89 +50,97 @@ class ObjectFieldComparer implements ValueComparer {
     	}
     	value = value.replace("''", "'");
     	
-    	String stringFieldValue = null;
+    	String stringIdentifierValue = null;
     	
     	try {
-    		Field field = pojo.getClass().getDeclaredField(identifier);
-    		field.setAccessible(true);
+    		Object identifierValue = null;
     		
-    		Object fieldValue = field.get(pojo);
-    		stringFieldValue = fieldValue.toString();
+    		if(isMethod) {
+    			Method method = pojo.getClass().getDeclaredMethod(identifier);
+    			method.setAccessible(true);
+    			identifierValue = method.invoke(pojo);
+    		} else {
+        		Field field = pojo.getClass().getDeclaredField(identifier);
+        		field.setAccessible(true);
+        		identifierValue = field.get(pojo);
+    		}
+
+    		stringIdentifierValue = identifierValue.toString();
     		
-    		if(fieldValue instanceof Byte) {
+    		if(identifierValue instanceof Byte) {
     			if(operator.equals(">")) {
-    				result = ((Byte)fieldValue).byteValue() > Byte.decode(value);
+    				result = ((Byte)identifierValue).byteValue() > Byte.decode(value);
     			} else if(operator.equals("<")) {
-    				result = ((Byte)fieldValue).byteValue() < Byte.decode(value);
+    				result = ((Byte)identifierValue).byteValue() < Byte.decode(value);
     			} else if(operator.equals("=")) {
-    				result = ((Byte)fieldValue).byteValue() == Byte.decode(value);
+    				result = ((Byte)identifierValue).byteValue() == Byte.decode(value);
     			} else if(operator.equals("<=")) {
-    				result = ((Byte)fieldValue).byteValue() <= Byte.decode(value);
+    				result = ((Byte)identifierValue).byteValue() <= Byte.decode(value);
     			} else { // comparator.equals(">=")
-    				result = ((Byte)fieldValue).byteValue() >= Byte.decode(value);
+    				result = ((Byte)identifierValue).byteValue() >= Byte.decode(value);
     			}
-    		} else if(fieldValue instanceof Short) {
+    		} else if(identifierValue instanceof Short) {
     			if(operator.equals(">")) {
-    				result = ((Short)fieldValue).shortValue() > Short.decode(value);
+    				result = ((Short)identifierValue).shortValue() > Short.decode(value);
     			} else if(operator.equals("<")) {
-    				result = ((Short)fieldValue).shortValue() < Short.decode(value);
+    				result = ((Short)identifierValue).shortValue() < Short.decode(value);
     			} else if(operator.equals("=")) {
-    				result = ((Short)fieldValue).shortValue() == Short.decode(value);
+    				result = ((Short)identifierValue).shortValue() == Short.decode(value);
     			} else if(operator.equals("<=")) {
-    				result = ((Short)fieldValue).shortValue() <= Short.decode(value);
+    				result = ((Short)identifierValue).shortValue() <= Short.decode(value);
     			} else { // comparator.equals(">=")
-    				result = ((Short)fieldValue).shortValue() >= Short.decode(value);
+    				result = ((Short)identifierValue).shortValue() >= Short.decode(value);
     			}
-    		} else if(fieldValue instanceof Integer) {
+    		} else if(identifierValue instanceof Integer) {
     			if(operator.equals(">")) {
-    				result = ((Integer)fieldValue).intValue() > Integer.decode(value);
+    				result = ((Integer)identifierValue).intValue() > Integer.decode(value);
     			} else if(operator.equals("<")) {
-    				result = ((Integer)fieldValue).intValue() < Integer.decode(value);
+    				result = ((Integer)identifierValue).intValue() < Integer.decode(value);
     			} else if(operator.equals("=")) {
-    				result = ((Integer)fieldValue).intValue() == Integer.decode(value);
+    				result = ((Integer)identifierValue).intValue() == Integer.decode(value);
     			} else if(operator.equals("<=")) {
-    				result = ((Integer)fieldValue).intValue() <= Integer.decode(value);
+    				result = ((Integer)identifierValue).intValue() <= Integer.decode(value);
     			} else { // comparator.equals(">=")
-    				result = ((Integer)fieldValue).intValue() >= Integer.decode(value);
+    				result = ((Integer)identifierValue).intValue() >= Integer.decode(value);
     			}
-    		} else if(fieldValue instanceof Long) {
+    		} else if(identifierValue instanceof Long) {
     			if(operator.equals(">")) {
-    				result = ((Long)fieldValue).longValue() > Long.decode(value);
+    				result = ((Long)identifierValue).longValue() > Long.decode(value);
     			} else if(operator.equals("<")) {
-    				result = ((Long)fieldValue).longValue() < Long.decode(value);
+    				result = ((Long)identifierValue).longValue() < Long.decode(value);
     			} else if(operator.equals("=")) {
-    				result = ((Long)fieldValue).longValue() == Long.decode(value);
+    				result = ((Long)identifierValue).longValue() == Long.decode(value);
     			} else if(operator.equals("<=")) {
-    				result = ((Long)fieldValue).longValue() <= Long.decode(value);
+    				result = ((Long)identifierValue).longValue() <= Long.decode(value);
     			} else { // comparator.equals(">=")
-    				result = ((Long)fieldValue).longValue() >= Long.decode(value);
+    				result = ((Long)identifierValue).longValue() >= Long.decode(value);
     			}
-    		} else if(fieldValue instanceof Float) {
+    		} else if(identifierValue instanceof Float) {
     			if(operator.equals(">")) {
-    				result = ((Float)fieldValue).floatValue() > Float.valueOf(value);
+    				result = ((Float)identifierValue).floatValue() > Float.valueOf(value);
     			} else if(operator.equals("<")) {
-    				result = ((Float)fieldValue).floatValue() < Float.valueOf(value);
+    				result = ((Float)identifierValue).floatValue() < Float.valueOf(value);
     			} else if(operator.equals("=")) {
-    				result = ((Float)fieldValue).floatValue() == Float.valueOf(value);
+    				result = ((Float)identifierValue).floatValue() == Float.valueOf(value);
     			} else if(operator.equals("<=")) {
-    				result = ((Float)fieldValue).floatValue() <= Float.valueOf(value);
+    				result = ((Float)identifierValue).floatValue() <= Float.valueOf(value);
     			} else { // comparator.equals(">=")
-    				result = ((Float)fieldValue).floatValue() >= Float.valueOf(value);
+    				result = ((Float)identifierValue).floatValue() >= Float.valueOf(value);
     			}
-    		} else if(fieldValue instanceof Double) {
+    		} else if(identifierValue instanceof Double) {
     			if(operator.equals(">")) {
-    				result = ((Double)fieldValue).doubleValue() > Double.valueOf(value);
+    				result = ((Double)identifierValue).doubleValue() > Double.valueOf(value);
     			} else if(operator.equals("<")) {
-    				result = ((Double)fieldValue).doubleValue() < Double.valueOf(value);
+    				result = ((Double)identifierValue).doubleValue() < Double.valueOf(value);
     			} else if(operator.equals("=")) {
-    				result = ((Double)fieldValue).doubleValue() == Double.valueOf(value);
+    				result = ((Double)identifierValue).doubleValue() == Double.valueOf(value);
     			} else if(operator.equals("<=")) {
-    				result = ((Double)fieldValue).doubleValue() <= Double.valueOf(value);
+    				result = ((Double)identifierValue).doubleValue() <= Double.valueOf(value);
     			} else { // comparator.equals(">=")
-    				result = ((Double)fieldValue).doubleValue() >= Double.valueOf(value);
+    				result = ((Double)identifierValue).doubleValue() >= Double.valueOf(value);
     			}
-    		} else if(fieldValue instanceof String){
-    			int compareTo = stringFieldValue.compareTo(value);
+    		} else if(identifierValue instanceof String){
+    			int compareTo = stringIdentifierValue.compareTo(value);
     			if(operator.equals(">")) {
     				result = (compareTo > 0);
     			} else if(operator.equals("<")) {
@@ -143,13 +153,17 @@ class ObjectFieldComparer implements ValueComparer {
     				result = (compareTo >= 0);
     			}
     		} else {
-    			throw new FieldTypeException(identifier, fieldValue.getClass(), pojo.getClass());
+    			throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
     		}
     	} catch(NoSuchFieldException e) {
-    		throw new NonexistentFieldException(identifier, pojo.getClass());
-    	} catch(IllegalAccessException e) {
-    		throw new RuntimeException(e);
-    	}
+    		throw new NonexistentIdentifierException(identifier, false, pojo.getClass());
+		} catch (NoSuchMethodException e) {
+			throw new NonexistentIdentifierException(identifier, true, pojo.getClass());
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
     	
     	return result;
     }

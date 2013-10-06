@@ -1,4 +1,4 @@
-package org.cp.condition;
+package org.cp.pojoconditions;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -9,10 +9,6 @@ import java.util.NoSuchElementException;
 
 import junit.framework.Assert;
 
-import org.cp.pojoconditions.FieldException;
-import org.cp.pojoconditions.FieldTypeException;
-import org.cp.pojoconditions.NonexistentFieldException;
-import org.cp.pojoconditions.PojoEvaluator;
 import org.junit.Test;
 
 
@@ -30,12 +26,40 @@ public class PojoEvaluatorTests {
 				"a<'this is some text'",
 				"a<'~!@#$%^&*()_+{}|:\"<>?[]\\;'',./€ƒ‡ŒŽñᠡ'",
 				"someField123<345",
-				"cat < '123' and dog<34 and monkey>3 or appleCount<52 and name='chris' and day=2 or m<=25 and y>=2013"
+				"cat < '123' and dog<34 and monkey>3 or appleCount<52 and name='chris' and day=2 or m<=25 and y>=2013",
 		};
 		
 		for(String validCondition : VALID_CONDITIONS) {
 			try{ 
 				PojoEvaluator.forCondition(validCondition);
+			} catch (Exception e) {
+				throw new Exception("Failed to create evaluator for condition: " + validCondition, e);
+			}
+		}
+	}
+	
+	@Test
+	public void testValidConditionsWithMethods() throws Exception {
+		final String[] VALID_CONDITIONS = {
+				"a=''",
+				"a=''''",
+				"a='christopher''s test'",
+				"a<3",
+				"a<3.0",
+				"a<'3'",
+				"a<2423482384",
+				"a<'this is some text'",
+				"a<'~!@#$%^&*()_+{}|:\"<>?[]\\;'',./€ƒ‡ŒŽñᠡ'",
+				"someField123<345",
+				"cat < '123' and dog<34 and monkey>3 or appleCount<52 and name='chris' and day=2 or m<=25 and y>=2013",
+				"a()>30",
+				"myname()='john'",
+				"some_other_method()=1 and afield='cat' or lastMethod<=3"
+		};
+		
+		for(String validCondition : VALID_CONDITIONS) {
+			try{ 
+				PojoEvaluator.forCondition(validCondition, true);
 			} catch (Exception e) {
 				throw new Exception("Failed to create evaluator for condition: " + validCondition, e);
 			}
@@ -57,8 +81,9 @@ public class PojoEvaluatorTests {
 				"a<2 and and a<2",
 				"a<2 and or a<2",
 				"a < 2 and b>3 or",
-				"a<\"dog\""
-				
+				"a<\"dog\"",
+				"a()<3",
+				"field>10 and size()=3"
 		};
 		
 		for(String invalidCondition : INVALID_CONDITIONS) {
@@ -298,6 +323,25 @@ public class PojoEvaluatorTests {
 	}
 	
 	@Test
+	public void testSimpleMethodConditions() {
+		PojoEvaluator evaluator = PojoEvaluator.forCondition("length()=1", true);
+		Assert.assertTrue(evaluator.matches("a"));
+		Assert.assertFalse(evaluator.matches("ab"));
+		Assert.assertFalse(evaluator.matches(""));
+	}
+	
+	@Test
+	public void testComplexMethodConditions() {
+		PojoEvaluator evaluator = PojoEvaluator.forCondition("trim()='' or toString()='Hat' and length()=3", true);
+		Assert.assertTrue(evaluator.matches(""));
+		Assert.assertTrue(evaluator.matches("    "));
+		Assert.assertTrue(evaluator.matches("Hat"));
+		Assert.assertFalse(evaluator.matches("a"));
+		Assert.assertFalse(evaluator.matches("Hat "));
+		Assert.assertFalse(evaluator.matches("hat"));
+	}
+	
+	@Test
 	public void testComplexConditions() {
 		PojoEvaluator evaluator = PojoEvaluator.forCondition("stringField='phone' and integerField<10 and integerField>=0");
 		Assert.assertTrue(evaluator.matches(new AllTypePojo("phone", null, null, 5, null, null, null)));
@@ -455,17 +499,17 @@ public class PojoEvaluatorTests {
 
 		List<FieldException> fieldExceptions = evaluator.getUnsupportedIdentifiers(intPojo.getClass());
 		Assert.assertEquals(1, fieldExceptions.size());
-		Assert.assertTrue(fieldExceptions.get(0) instanceof NonexistentFieldException);
+		Assert.assertTrue(fieldExceptions.get(0) instanceof NonexistentIdentifierException);
 		
-		NonexistentFieldException NonexistentFieldException = (NonexistentFieldException)fieldExceptions.get(0);
-		Assert.assertEquals("madeUpField", NonexistentFieldException.getFieldName());
+		NonexistentIdentifierException NonexistentFieldException = (NonexistentIdentifierException)fieldExceptions.get(0);
+		Assert.assertEquals("madeUpField", NonexistentFieldException.getIdentifier());
 		Assert.assertEquals(IntPojo.class, NonexistentFieldException.getPojoClass());
 		
 		try{
 			evaluator.matches(intPojo);
 			Assert.fail("Expected an exception");
-		} catch (NonexistentFieldException e) {
-			Assert.assertEquals("madeUpField", e.getFieldName());
+		} catch (NonexistentIdentifierException e) {
+			Assert.assertEquals("madeUpField", e.getIdentifier());
 			Assert.assertEquals(IntPojo.class, e.getPojoClass());
 		}
 	}
