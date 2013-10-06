@@ -86,3 +86,47 @@ Examples:
         temperature > 90 and temperature < 100
         light='red' or light='yellow'
         type='penny' and year<1996 or type='nickel' and year<1974
+        
+Conditions with Methods
+----
+
+Conditions may also contain no parameter methods, but this must be enabled by using PojoEvaluator.forCondition(condition, true), where the second parameter indicates that the condition parsing should allow methods.  With this enabled, the specified method will be called on the objects and the return value will be used to evaluate the condition.
+
+Examples:
+
+        getCount()>=10
+        size()=1 or toString()='Special Value'
+        
+
+Ordering
+--
+
+In addition to the filtering support with conditions is the ability to sort arrays, lists and generate comparators based on an order by clause.
+
+The clauses default to ordering fields in ascending order, and have the form:
+
+        order by identifier [asc|desc] [, identifier2 [asc|desc] ...]
+        
+With the following code sorting our XY class from earlier:
+
+        XY[] points = {new XY(0, 0), new XY(-1, -1), new XY(2, 0), new XY(2, -1)};
+		
+        // order the points according to their x field, from low to high
+        // --> x value of sorted points will be -1, 0, 2, 2
+        PojoOrdering<XY> xyOrdering = PojoOrdering.forOrderBy("order by x");
+        xyOrdering.sort(points);
+        
+        // re-sort the points by y value, followed by x descending
+        // x,y values of sorted points will be (2,-1), (-1,-1), (2,0), (0,0)
+        xyOrdering = PojoOrdering.forOrderBy("order by y, x desc", true);
+        xyOrdering.sort(points);
+        
+        
+And similar to condition parsing, we can support no parameter methods:
+
+		String[] data = {"this is long", "b", "a", "z"};
+		
+		// sort the strings by length, with strings of equal length sorted lexicographically,
+		// resulting in: "a", "b", "z", "this is long"
+		PojoOrdering<String> stringOrdering = PojoOrdering.forOrderBy("order by length(), toString()", true);
+		stringOrdering.sort(data);
