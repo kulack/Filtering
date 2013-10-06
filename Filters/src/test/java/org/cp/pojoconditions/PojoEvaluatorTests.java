@@ -323,6 +323,39 @@ public class PojoEvaluatorTests {
 	}
 	
 	@Test
+	public void testBooleanType() {
+		PojoEvaluator evaluator = PojoEvaluator.forCondition("field='true'");
+		Assert.assertTrue(evaluator.matches(new BooleanPojo(true)));
+		Assert.assertFalse(evaluator.matches(new BooleanPojo(false)));
+		
+		evaluator = PojoEvaluator.forCondition("field='false'");
+		Assert.assertFalse(evaluator.matches(new BooleanPojo(true)));
+		Assert.assertTrue(evaluator.matches(new BooleanPojo(false)));
+		
+		evaluator = PojoEvaluator.forCondition("getField()='false'", true);
+		Assert.assertFalse(evaluator.matches(new BooleanPojo(true)));
+		Assert.assertTrue(evaluator.matches(new BooleanPojo(false)));
+		
+		evaluator = PojoEvaluator.forCondition("getField()='true' or field='false'", true);
+		Assert.assertTrue(evaluator.matches(new BooleanPojo(true)));
+		Assert.assertTrue(evaluator.matches(new BooleanPojo(false)));
+		
+		evaluator = PojoEvaluator.forCondition("field='true' and getField()='false'", true);
+		Assert.assertFalse(evaluator.matches(new BooleanPojo(true)));
+		Assert.assertFalse(evaluator.matches(new BooleanPojo(false)));
+		
+		for(String operator: new String[]{">", "<", ">=", "<="}) {
+			try {
+				evaluator = PojoEvaluator.forCondition("field" + operator + "'false'");
+				evaluator.matches(new BooleanPojo(false));
+				Assert.fail("Should've thrown exception for operator: " + operator);
+			} catch (FieldTypeException e) {
+				
+			}
+		}
+	}
+	
+	@Test
 	public void testSimpleMethodConditions() {
 		PojoEvaluator evaluator = PojoEvaluator.forCondition("length()=1", true);
 		Assert.assertTrue(evaluator.matches("a"));
@@ -547,6 +580,18 @@ public class PojoEvaluatorTests {
 		private final Date field;
 		public DatePojo(Date date) {
 			this.field = date;
+		}
+	}
+
+	private static class BooleanPojo {
+		private final boolean field;
+		
+		public BooleanPojo(Boolean field) {
+			this.field = field;
+		}
+		
+		public boolean getField() {
+			return field;
 		}
 	}
 }

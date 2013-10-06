@@ -139,6 +139,8 @@ class ObjectFieldComparer implements ValueComparer {
     			} else { // comparator.equals(">=")
     				result = ((Double)identifierValue).doubleValue() >= Double.valueOf(value);
     			}
+    		} else if(identifierValue instanceof Boolean && operator.equals("=")) {
+    				result = ((Boolean)identifierValue).booleanValue() == Boolean.valueOf(value);
     		} else if(identifierValue instanceof String){
     			int compareTo = stringIdentifierValue.compareTo(value);
     			if(operator.equals(">")) {
@@ -187,6 +189,9 @@ class ObjectFieldComparer implements ValueComparer {
     	
     	supportedFieldTypes.add(Double.TYPE);
     	supportedFieldTypes.add(Double.class);
+    	
+    	supportedFieldTypes.add(Boolean.TYPE);
+    	supportedFieldTypes.add(Boolean.class);
     	
     	supportedFieldTypes.add(String.class);
     	
