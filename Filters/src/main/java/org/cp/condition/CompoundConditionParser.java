@@ -1,17 +1,17 @@
 package org.cp.condition;
 
-import static org.parboiled.errors.ErrorUtils.printParseErrors;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cp.ordering.IdentifierOrder;
 import org.cp.pojoconditions.PojoParser;
-import org.parboiled.Parboiled;
-import org.parboiled.Rule;
-import org.parboiled.parserunners.ReportingParseRunner;
-import org.parboiled.support.ParsingResult;
-import org.parboiled.support.StringVar;
-import org.parboiled.support.Var;
+
+import com.github.fge.grappa.Grappa;
+import com.github.fge.grappa.rules.Rule;
+import com.github.fge.grappa.run.ListeningParseRunner;
+import com.github.fge.grappa.run.ParsingResult;
+import com.github.fge.grappa.support.StringVar;
+import com.github.fge.grappa.support.Var;
 
 /**
  * Class that supports parsing non-nested AND and OR conditions of form:
@@ -26,21 +26,21 @@ public class CompoundConditionParser extends PojoParser<Condition> {
 		this.matchMethods = matchMethods;
 	}
 	
-	public Rule Condition() {
-		return FirstOf(Sequence(SimpleCondition(), EOI), Sequence(AndCondition(), EOI), Sequence(OrCondition(), EOI));
+	public Rule condition() {
+		return firstOf(sequence(simpleCondition(), EOI), sequence(andCondition(), EOI), sequence(orCondition(), EOI));
 	}
 	
-	public Rule OrCondition() {
+	public Rule orCondition() {
 		Var<List<Condition>> conditions = new Var<List<Condition>>(new ArrayList<Condition>());
 		
-		return Sequence(
+		return sequence(
 				  // starts with Simple or And Condition, which we pop off the stack and add to our list
-				  FirstOf(AndCondition(), SimpleCondition()), conditions.get().add(pop()),
+				  firstOf(andCondition(), simpleCondition()), conditions.get().add(pop()),
 				  
 				  // followed by one or more Simple or And Conditions separated by OR, each
 				  // of which we pop off the stack and add to our list
-				  OneOrMore(
-				    Sequence(Spacing(), Or(), Spacing(), FirstOf(AndCondition(), SimpleCondition())), conditions.get().add(pop())
+				  oneOrMore(
+				    sequence(spacing(), or(), spacing(), firstOf(andCondition(), simpleCondition())), conditions.get().add(pop())
 				    ),
 				    
 				  // and finally we push the collected list of conditions back onto the stack
@@ -54,18 +54,18 @@ public class CompoundConditionParser extends PojoParser<Condition> {
 	 * comparison, where each is 
 	 * @return
 	 */
-	public Rule AndCondition() {
+	public Rule andCondition() {
 		Var<List<Condition>> conditions = new Var<List<Condition>>(new ArrayList<Condition>());
 		
-		return Sequence(
+		return sequence(
 				  // AndCondition starts with a simple condition, which we pop off the stack
 				  // and add to our list
-				  SimpleCondition(), conditions.get().add(pop()),
+				  simpleCondition(), conditions.get().add(pop()),
 				  
 				  // followed by one or more simple conditions, separated by AND, each of which
 				  // we pop off the stack and add to our list of conditions
-				  OneOrMore(
-					  Sequence(Spacing(), And(), Spacing(), SimpleCondition(), conditions.get().add(pop()))
+				  oneOrMore(
+					  sequence(spacing(), and(), spacing(), simpleCondition(), conditions.get().add(pop()))
 				  ), 
 				  
 				  // and finally we push the collected list of conditions back onto the stack
@@ -88,18 +88,18 @@ public class CompoundConditionParser extends PojoParser<Condition> {
 	 * while the following are invalid:
 	 * a<cat (lacking quotes around the value)
 	 */
-    public Rule SimpleCondition() {
+    public Rule simpleCondition() {
     	StringVar identifier = new StringVar();
     	Var<Boolean> isMethod = new Var<Boolean>();
     	StringVar operator = new StringVar();
     	StringVar value = new StringVar();
 
-    	return Sequence(
-    			FirstOf(Sequence(matchMethods, NoParamMethod(), identifier.set(match()), isMethod.set(true)), Sequence(Identifier(), identifier.set(match()), isMethod.set(false))), 
-    			Optional(Spacing()), 
-    			ComparisonOperator(), operator.set(match()), 
-    			Optional(Spacing()), 
-    			Value(), value.set(match()),
+    	return sequence(
+    			firstOf(sequence(matchMethods, noParamMethod(), identifier.set(match()), isMethod.set(true)), sequence(identifier(), identifier.set(match()), isMethod.set(false))), 
+    			optional(spacing()), 
+    			comparisonOperator(), operator.set(match()), 
+    			optional(spacing()), 
+    			value(), value.set(match()),
     			push(new SimpleCondition(identifier.get(), isMethod.get(), operator.get(), value.get())));
     }
     
@@ -107,24 +107,24 @@ public class CompoundConditionParser extends PojoParser<Condition> {
      * Matches what we expect in a condition to represent OR
      * for two conditions.  The check is not case sensitive.
      */
-    Rule Or() {
-    	return IgnoreCase("OR");
+    Rule or() {
+    	return ignoreCase("OR");
     }
     
     /**
      * Matches what we expect in a condition to represent AND
      * for two conditions.  The check is not case sensitive.
      */
-    Rule And() {
-    	return IgnoreCase("AND");
+    Rule and() {
+    	return ignoreCase("AND");
     }
 
     /**
      * Comparison operators that we allow for our conditions.  These
      * include <=, >=, <, >, and =
      */
-    Rule ComparisonOperator() {
-    	return FirstOf("<=", ">=", "<", ">", "=");
+    Rule comparisonOperator() {
+    	return firstOf("<=", ">=", "<", ">", "=");
     }
     
     /**
@@ -133,14 +133,16 @@ public class CompoundConditionParser extends PojoParser<Condition> {
      * @throws IllegalArgumentException if the condition fails to parse
      */
     public static Condition parseCondition(String condition, boolean matchMethods) {
-    	CompoundConditionParser parser = Parboiled.createParser(CompoundConditionParser.class, matchMethods);
-    	ParsingResult<Condition> result = new ReportingParseRunner<Condition>(parser.Condition()).run(condition);
+    	CompoundConditionParser parser = Grappa.createParser(CompoundConditionParser.class, matchMethods);
+        ListeningParseRunner<Condition> runner = new ListeningParseRunner<>(parser.condition());
+        ParsingResult<Condition> result = runner.run(condition);
+    	// ParsingResult<Condition> result = new ReportingParseRunner<Condition>(parser.condition()).run(condition);
     	
-    	if(result.hasErrors()) {
-    		throw new IllegalArgumentException(printParseErrors(result));
+    	if (!result.isSuccess()) {
+    		throw new IllegalArgumentException("Failed to parse: " + condition);
     	}
     	
-    	return result.resultValue;
+    	return result.getTopStackValue();
     }
 
 }

@@ -1,7 +1,7 @@
 package org.cp.pojoconditions;
 
-import org.parboiled.BaseParser;
-import org.parboiled.Rule;
+import com.github.fge.grappa.parsers.BaseParser;
+import com.github.fge.grappa.rules.Rule;
 
 /**
  * Provides a base set of rules that are useful for parsing various
@@ -14,8 +14,8 @@ public abstract class PojoParser<V> extends BaseParser<V>{
      * whitespace that is allowed in the condition is one or more spaces,
      * other whitespace characters (tabs, newlines, etc.) are not allowed.
      */
-	public Rule Spacing() {
-		return OneOrMore(AnyOf(" ").label("Whitespace"));
+	public Rule spacing() {
+		return oneOrMore(anyOf(" ").label("Whitespace"));
 	}
     
     /**
@@ -24,48 +24,49 @@ public abstract class PojoParser<V> extends BaseParser<V>{
      * inclusion or lack of quotes does not impact the type it is evaluated
      * as later.
      */
-	public Rule Value() {
-		return FirstOf(Sequence('\'', ZeroOrMore(FirstOf(NoneOf("'"), Sequence("'", "'"))), '\''), Sequence(OneOrMore(Digit()), Optional(".", OneOrMore(Digit()))));
+	public Rule value() {
+		return firstOf(sequence('\'', zeroOrMore(firstOf(noneOf("'"), sequence("'", "'"))), '\''), 
+		               sequence(oneOrMore(digit()), optional(".", oneOrMore(digit()))));
 	}
 	
-	public Rule NoParamMethod() {
-		return Sequence(Identifier(), Optional(Spacing()), Ch('('), Optional(Spacing()), Ch(')'));
+	public Rule noParamMethod() {
+		return sequence(identifier(), optional(spacing()), ch('('), optional(spacing()), ch(')'));
 	}
 	
     /**
      * An identifier is represented by one non-numeric character followed
      * by characters and numbers
      */
-	public Rule Identifier() {
-		return Sequence(Character(), ZeroOrMore(CharacterOrDigit()));
+	public Rule identifier() {
+		return sequence(character(), zeroOrMore(characterOrDigit()));
 	}
 
     /**
      * Represents legal characters after the first for a field
      * @return
      */
-	public Rule CharacterOrDigit() {
-		return FirstOf(Character(), Digit());
+	public Rule characterOrDigit() {
+		return firstOf(character(), digit());
 	}
 
 	/**
 	 * Represents legal characters for the start of a field in Java
 	 */
-	public Rule Character() {
-		return FirstOf( 
-				CharRange('A', 'Z'),
-				CharRange('a', 'z'), 
-				CharRange('\u00C0', '\u00D6'), 
-				CharRange('\u00D8', '\u00F6'), 
-				CharRange('\u00F8', '\u02FF'), 
-				CharRange('\u0370', '\u037D'), 
-				CharRange('\u037F', '\u1FFF'), 
-				CharRange('\u200C', '\u200D'), 
-				CharRange('\u2070', '\u218F'), 
-				CharRange('\u2C00', '\u2FEF'), 
-				CharRange('\u3001', '\uD7FF'), 
-				CharRange('\uF900', '\uFDCF'), 
-				CharRange('\uFDF0', '\uFFFD'),
+	public Rule character() {
+		return firstOf( 
+				charRange('A', 'Z'),
+				charRange('a', 'z'), 
+				charRange('\u00C0', '\u00D6'), 
+				charRange('\u00D8', '\u00F6'), 
+				charRange('\u00F8', '\u02FF'), 
+				charRange('\u0370', '\u037D'), 
+				charRange('\u037F', '\u1FFF'), 
+				charRange('\u200C', '\u200D'), 
+				charRange('\u2070', '\u218F'), 
+				charRange('\u2C00', '\u2FEF'), 
+				charRange('\u3001', '\uD7FF'), 
+				charRange('\uF900', '\uFDCF'), 
+				charRange('\uFDF0', '\uFFFD'),
 				'_'
 		);
 	}
@@ -73,7 +74,7 @@ public abstract class PojoParser<V> extends BaseParser<V>{
 	/**
 	 * Represents numbers
 	 */
-	public Rule Digit() {
-		return CharRange('0', '9');
+	public Rule digit() {
+		return charRange('0', '9');
 	}
 }

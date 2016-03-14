@@ -5,9 +5,14 @@
   <version>0.0.1-SNAPSHOT</version>
   <dependencies>
 		<dependency>
-			<groupId>org.parboiled</groupId>
-			<artifactId>parboiled-java</artifactId>
-			<version>1.1.6</version>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.github.fge</groupId>
+		    <artifactId>grappa</artifactId>
+		    <version>2.0.4</version>
 		</dependency>
   </dependencies>
 </project>

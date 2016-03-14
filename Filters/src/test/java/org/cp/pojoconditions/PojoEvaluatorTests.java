@@ -27,6 +27,7 @@ public class PojoEvaluatorTests {
 				"a<'~!@#$%^&*()_+{}|:\"<>?[]\\;'',./€ƒ‡ŒŽñᠡ'",
 				"someField123<345",
 				"cat < '123' and dog<34 and monkey>3 or appleCount<52 and name='chris' and day=2 or m<=25 and y>=2013",
+                "cat < '123' or dog<34 or monkey>3 or appleCount<52 and name='chris' and day=2 or m<=25 and y>=2013",				
 		};
 		
 		for(String validCondition : VALID_CONDITIONS) {
