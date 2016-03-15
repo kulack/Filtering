@@ -159,6 +159,22 @@ public class PojoEvaluatorTests {
 		Assert.assertFalse(evaluator.matches(new IntPojo(2)));
 		Assert.assertFalse(evaluator.matches(new IntPojo(3)));
 		Assert.assertFalse(evaluator.matches(new IntPojo(4)));
+		
+		evaluator = PojoEvaluator.forCondition("field=~'12'");
+		try {
+		    evaluator.matches(new IntPojo(123847));
+		    Assert.fail("Expected an exception");
+		}
+		catch (FieldTypeException e) {
+		}
+        
+        evaluator = PojoEvaluator.forCondition("field!~'12'");
+        try {
+            evaluator.matches(new IntPojo(123847));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
 	}
 	
 	@Test
@@ -186,6 +202,21 @@ public class PojoEvaluatorTests {
 		Assert.assertTrue(evaluator.matches(new AllTypePojo("bear", null, null, null, null, null, null)));
 		Assert.assertTrue(evaluator.matches(new AllTypePojo("cat", null, null, null, null, null, null)));
 		Assert.assertFalse(evaluator.matches(new AllTypePojo("zebra", null, null, null, null, null, null)));
+		
+		// Case insensitive compare
+        evaluator = PojoEvaluator.forCondition("stringField=~'AT'");
+        Assert.assertFalse(evaluator.matches(new AllTypePojo("bear", null, null, null, null, null, null)));
+        Assert.assertTrue(evaluator.matches(new AllTypePojo("at", null, null, null, null, null, null)));
+        Assert.assertTrue(evaluator.matches(new AllTypePojo("cat", null, null, null, null, null, null)));
+        Assert.assertTrue(evaluator.matches(new AllTypePojo("attack", null, null, null, null, null, null)));
+        Assert.assertTrue(evaluator.matches(new AllTypePojo("batty", null, null, null, null, null, null)));
+        
+        evaluator = PojoEvaluator.forCondition("stringField!~'AT'");
+        Assert.assertTrue(evaluator.matches(new AllTypePojo("bear", null, null, null, null, null, null)));
+        Assert.assertFalse(evaluator.matches(new AllTypePojo("at", null, null, null, null, null, null)));
+        Assert.assertFalse(evaluator.matches(new AllTypePojo("cat", null, null, null, null, null, null)));
+        Assert.assertFalse(evaluator.matches(new AllTypePojo("attack", null, null, null, null, null, null)));
+        Assert.assertFalse(evaluator.matches(new AllTypePojo("batty", null, null, null, null, null, null)));
 	}
 	
 	@Test
@@ -213,6 +244,22 @@ public class PojoEvaluatorTests {
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, (byte)124, null, null, null, null, null)));
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, (byte)125, null, null, null, null, null)));
 		Assert.assertFalse(evaluator.matches(new AllTypePojo(null, (byte)126, null, null, null, null, null)));
+		
+        evaluator = PojoEvaluator.forCondition("byteField=~'12'");
+        try {
+            evaluator.matches(new AllTypePojo(null, (byte)125, null, null, null, null, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
+        
+        evaluator = PojoEvaluator.forCondition("byteField!~'12'");
+        try {
+            evaluator.matches(new AllTypePojo(null, (byte)102, null, null, null, null, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
 	}
 	
 	@Test
@@ -240,6 +287,22 @@ public class PojoEvaluatorTests {
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, (short)124, null, null, null, null)));
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, (short)125, null, null, null, null)));
 		Assert.assertFalse(evaluator.matches(new AllTypePojo(null, null, (short)126, null, null, null, null)));
+        
+        evaluator = PojoEvaluator.forCondition("shortField=~'12'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, (short)1250, null, null, null, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
+        
+        evaluator = PojoEvaluator.forCondition("shortField!~'12'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, (short)2100, null, null, null, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
 	}
 	
 	@Test
@@ -265,8 +328,24 @@ public class PojoEvaluatorTests {
 		
 		evaluator = PojoEvaluator.forCondition("longField<=125");
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, 124L, null, null)));
-		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, 125L, null, null)));
+        Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, 125L, null, null)));
 		Assert.assertFalse(evaluator.matches(new AllTypePojo(null, null, null, null, 126L, null, null)));
+		
+        evaluator = PojoEvaluator.forCondition("longField=~'12'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, null, null, 125560L, null, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
+        
+        evaluator = PojoEvaluator.forCondition("longField!~'12'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, null, null, 837484748L, null, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
 	}
 	
 	@Test
@@ -294,6 +373,22 @@ public class PojoEvaluatorTests {
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, null, 124.9f, null)));
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, null, 125.0f, null)));
 		Assert.assertFalse(evaluator.matches(new AllTypePojo(null, null, null, null, null, 125.1f, null)));
+        
+        evaluator = PojoEvaluator.forCondition("floatField=~'125'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, null, null, null, -125.0f, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
+        
+        evaluator = PojoEvaluator.forCondition("floatField!~'125'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, null, null, null, 343434351.4323f, null));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
 	}
 	
 	@Test
@@ -321,6 +416,21 @@ public class PojoEvaluatorTests {
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, null, null, 124.9)));
 		Assert.assertTrue(evaluator.matches(new AllTypePojo(null, null, null, null, null, null, 125.0)));
 		Assert.assertFalse(evaluator.matches(new AllTypePojo(null, null, null, null, null, null, 125.1)));
+		
+        evaluator = PojoEvaluator.forCondition("doubleField=~'125'");
+        try {
+            evaluator.matches(new AllTypePojo(null, null, null, null, null, null, 343434125.4323d));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
+        
+        try {
+            evaluator.matches(new AllTypePojo(null, null, null, null, null, null, 343434351.4323d));
+            Assert.fail("Expected an exception");
+        }
+        catch (FieldTypeException e) {
+        }
 	}
 	
 	@Test
@@ -345,7 +455,7 @@ public class PojoEvaluatorTests {
 		Assert.assertFalse(evaluator.matches(new BooleanPojo(true)));
 		Assert.assertFalse(evaluator.matches(new BooleanPojo(false)));
 		
-		for(String operator: new String[]{">", "<", ">=", "<="}) {
+		for(String operator: new String[]{">", "<", ">=", "<=", "=~", "!~"}) {
 			try {
 				evaluator = PojoEvaluator.forCondition("field" + operator + "'false'");
 				evaluator.matches(new BooleanPojo(false));

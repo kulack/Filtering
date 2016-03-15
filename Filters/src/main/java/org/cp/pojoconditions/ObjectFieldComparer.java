@@ -3,6 +3,7 @@ package org.cp.pojoconditions;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -76,8 +77,12 @@ class ObjectFieldComparer implements ValueComparer {
     				result = ((Byte)identifierValue).byteValue() == Byte.decode(value);
     			} else if(operator.equals("<=")) {
     				result = ((Byte)identifierValue).byteValue() <= Byte.decode(value);
-    			} else { // comparator.equals(">=")
+    			} else if (operator.equals(">=")) {
     				result = ((Byte)identifierValue).byteValue() >= Byte.decode(value);
+    			} else if (operator.equals("=~")) {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+    			} else /* if (operator.equals("!~"))*/ {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
     			}
     		} else if(identifierValue instanceof Short) {
     			if(operator.equals(">")) {
@@ -88,9 +93,13 @@ class ObjectFieldComparer implements ValueComparer {
     				result = ((Short)identifierValue).shortValue() == Short.decode(value);
     			} else if(operator.equals("<=")) {
     				result = ((Short)identifierValue).shortValue() <= Short.decode(value);
-    			} else { // comparator.equals(">=")
+    			} else if (operator.equals(">=")) {
     				result = ((Short)identifierValue).shortValue() >= Short.decode(value);
-    			}
+    			} else if (operator.equals("=~")) {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                } else /* if (operator.equals("!~"))*/ {
+                    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                }
     		} else if(identifierValue instanceof Integer) {
     			if(operator.equals(">")) {
     				result = ((Integer)identifierValue).intValue() > Integer.decode(value);
@@ -100,9 +109,13 @@ class ObjectFieldComparer implements ValueComparer {
     				result = ((Integer)identifierValue).intValue() == Integer.decode(value);
     			} else if(operator.equals("<=")) {
     				result = ((Integer)identifierValue).intValue() <= Integer.decode(value);
-    			} else { // comparator.equals(">=")
+    			} else if (operator.equals(">=")) {
     				result = ((Integer)identifierValue).intValue() >= Integer.decode(value);
-    			}
+    			} else if (operator.equals("=~")) {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                } else /* if (operator.equals("!~"))*/ {
+                    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                }
     		} else if(identifierValue instanceof Long) {
     			if(operator.equals(">")) {
     				result = ((Long)identifierValue).longValue() > Long.decode(value);
@@ -112,9 +125,13 @@ class ObjectFieldComparer implements ValueComparer {
     				result = ((Long)identifierValue).longValue() == Long.decode(value);
     			} else if(operator.equals("<=")) {
     				result = ((Long)identifierValue).longValue() <= Long.decode(value);
-    			} else { // comparator.equals(">=")
+    			} else if (operator.equals(">=")) {
     				result = ((Long)identifierValue).longValue() >= Long.decode(value);
-    			}
+    			} else if (operator.equals("=~")) {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                } else /* if (operator.equals("!~"))*/ {
+                    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                }
     		} else if(identifierValue instanceof Float) {
     			if(operator.equals(">")) {
     				result = ((Float)identifierValue).floatValue() > Float.valueOf(value);
@@ -124,9 +141,13 @@ class ObjectFieldComparer implements ValueComparer {
     				result = ((Float)identifierValue).floatValue() == Float.valueOf(value);
     			} else if(operator.equals("<=")) {
     				result = ((Float)identifierValue).floatValue() <= Float.valueOf(value);
-    			} else { // comparator.equals(">=")
+    			} else if (operator.equals(">=")) {
     				result = ((Float)identifierValue).floatValue() >= Float.valueOf(value);
-    			}
+    			} else if (operator.equals("=~")) {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                } else /* if (operator.equals("!~"))*/ {
+                    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                }
     		} else if(identifierValue instanceof Double) {
     			if(operator.equals(">")) {
     				result = ((Double)identifierValue).doubleValue() > Double.valueOf(value);
@@ -136,24 +157,34 @@ class ObjectFieldComparer implements ValueComparer {
     				result = ((Double)identifierValue).doubleValue() == Double.valueOf(value);
     			} else if(operator.equals("<=")) {
     				result = ((Double)identifierValue).doubleValue() <= Double.valueOf(value);
-    			} else { // comparator.equals(">=")
+    			} else if (operator.equals(">=")) {
     				result = ((Double)identifierValue).doubleValue() >= Double.valueOf(value);
-    			}
+    			} else if (operator.equals("=~")) {
+    			    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                } else /* if (operator.equals("!~"))*/ {
+                    throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
+                }
     		} else if(identifierValue instanceof Boolean && operator.equals("=")) {
     				result = ((Boolean)identifierValue).booleanValue() == Boolean.valueOf(value);
     		} else if(identifierValue instanceof String){
-    			int compareTo = stringIdentifierValue.compareTo(value);
-    			if(operator.equals(">")) {
-    				result = (compareTo > 0);
-    			} else if(operator.equals("<")) {
-    				result = (compareTo < 0);
-    			} else if(operator.equals("=")) {
-    				result = (compareTo == 0);
-    			} else if(operator.equals("<=")) {
-    				result = (compareTo <= 0);
-    			} else { // comparator.equals(">=")
-    				result = (compareTo >= 0);
-    			}
+    		    if (operator.equals("=~")) {
+    		        result = ((String)identifierValue).toLowerCase().contains(value.toLowerCase());
+    		    } else if (operator.equals("!~")) {
+    		        result = !((String)identifierValue).toLowerCase().contains(value.toLowerCase());
+    		    } else {
+    		        int compareTo = stringIdentifierValue.compareTo(value);
+    		        if(operator.equals(">")) {
+    		            result = (compareTo > 0);
+    		        } else if(operator.equals("<")) {
+    		            result = (compareTo < 0);
+    		        } else if(operator.equals("=")) {
+    		            result = (compareTo == 0);
+    		        } else if(operator.equals("<=")) {
+    		            result = (compareTo <= 0);
+    		        } else if (operator.equals(">=")) {
+    		            result = (compareTo >= 0);
+    		        }
+    		    }
     		} else {
     			throw new FieldTypeException(identifier, identifierValue.getClass(), pojo.getClass());
     		}
@@ -198,3 +229,4 @@ class ObjectFieldComparer implements ValueComparer {
     	return supportedFieldTypes;
     }
 }
+

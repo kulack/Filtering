@@ -124,7 +124,7 @@ public class CompoundConditionParser extends PojoParser<Condition> {
      * include <=, >=, <, >, and =
      */
     Rule comparisonOperator() {
-    	return firstOf("<=", ">=", "<", ">", "=");
+    	return firstOf("<=", ">=", "<", ">", "=", "=~", "!~");
     }
     
     /**
