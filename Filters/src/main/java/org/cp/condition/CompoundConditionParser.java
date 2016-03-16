@@ -121,7 +121,7 @@ public class CompoundConditionParser extends PojoParser<Condition> {
 
     /**
      * Comparison operators that we allow for our conditions.  These
-     * include <=, >=, <, >, and =
+     * include <=, >=, <, >, =, =~ and !~
      */
     Rule comparisonOperator() {
     	return firstOf("<=", ">=", "<", ">", "=", "=~", "!~");
